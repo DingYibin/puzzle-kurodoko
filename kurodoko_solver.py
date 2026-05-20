@@ -892,9 +892,13 @@ class Solver:
 
         if not white_ok:
             # Only BLACK works -- replay recorded state, no recomputation
-            self._trace.extend(black_actions)
-            self._action.extend(black_actions)
-            for br, bc, _, bnew in black_actions:
+            updated_trace = [(br, bc, ob, nb, len(self._trace) + i)
+                             for i, (br, bc, ob, nb, _) in enumerate(black_actions)]
+            updated_action = [(br, bc, ob, nb, len(self._trace) + i)
+                              for i, (br, bc, ob, nb, _) in enumerate(black_actions)]
+            self._trace.extend(updated_trace)
+            self._action.extend(updated_action)
+            for br, bc, _, bnew, _ in black_actions:
                 self.state[br][bc] = bnew
                 self._update_clues_for_cell(br, bc)
             self._dirty = True
@@ -908,7 +912,7 @@ class Solver:
         unknown_cells = [(r, c) for r in range(self.N) for c in range(self.N)
                          if self.state[r][c] == UNKNOWN]
         if self._action:
-            lr, lc, _, _ = self._action[-1]
+            lr, lc, _, _, _ = self._action[-1]
             unknown_cells.sort(key=lambda x: abs(x[0] - lr) + abs(x[1] - lc))
         changed = False
 
@@ -943,8 +947,8 @@ class Solver:
         """
         old = self.state[r][c]
         if old != val:
-            self._trace.append((r, c, old, val))
-            self._action.append((r, c, old, val))
+            self._trace.append((r, c, old, val, len(self._trace)))
+            self._action.append((r, c, old, val, len(self._trace)))
             self.state[r][c] = val
             self._dirty = True
             self._update_clues_for_cell(r, c)
@@ -1010,8 +1014,8 @@ class Solver:
     def _backtrack(self, pos: int):
         """Rollback actions after a checkpoint, recording undo in trace."""
         while len(self._action) > pos:
-            r, c, old, new = self._action.pop()
-            self._trace.append((r, c, new, old))  # undo
+            r, c, old, new, _ = self._action.pop()
+            self._trace.append((r, c, new, old, len(self._trace)))  # undo
             self.state[r][c] = old
             self._update_clues_for_cell(r, c)
 
@@ -1041,7 +1045,7 @@ class Solver:
         GBG = "\033[100;30m"
         cell_w = 5 if self.N >= 10 else 4
         label_w = max(2, len(str(self.N)))
-        total = len(steps)
+        total = len(self._trace)
         pw = len(str(total))
 
         # Column offset: label uses label_w+1 chars + 1 space before cells
@@ -1081,14 +1085,13 @@ class Solver:
 
         # ── Live counter line ──
         counter_row = self.N + 3
-        _sys.stdout.write(f"\033[{counter_row};1H白:{wc}  黑:{bc}  未知:{uc}")
+        _sys.stdout.write(f"\033[{counter_row};1H白:{wc:>{pw}}  黑:{bc:>{pw}}  未知:{uc:>{pw}}")
         _sys.stdout.flush()
         _time.sleep(2)
 
         # ── Animate steps ──
-        for step_i, (r, c, old, new) in enumerate(steps):
-            if self.fixed[r][c]:
-                continue
+        for r, c, old, new, step_i in steps:
+            assert not self.fixed[r][c], f"Fixed cell should not be set, while ({r}, {c}) is set as {new}"
 
             # Update counters
             if old == UNKNOWN:   uc -= 1
@@ -1116,7 +1119,7 @@ class Solver:
                 _sys.stdout.write(f'{GBG}{".".rjust(cell_w - 1)} {RE}')
 
             # Live counters
-            _sys.stdout.write(f"\033[{counter_row};1H白:{wc}  黑:{bc}  未知:{uc}   ")
+            _sys.stdout.write(f"\033[{counter_row};1H白:{wc:>{pw}}  黑:{bc:>{pw}}  未知:{uc:>{pw}}   ")
             _sys.stdout.flush()
             _time.sleep(delay)
 
