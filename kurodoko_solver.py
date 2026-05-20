@@ -947,8 +947,8 @@ class Solver:
         """
         old = self.state[r][c]
         if old != val:
-            self._trace.append((r, c, old, val, len(self._trace)))
             self._action.append((r, c, old, val, len(self._trace)))
+            self._trace.append((r, c, old, val, len(self._trace)))
             self.state[r][c] = val
             self._dirty = True
             self._update_clues_for_cell(r, c)
