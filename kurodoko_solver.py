@@ -1043,7 +1043,7 @@ class Solver:
         WBG = "\033[47;30m"
         BBG = "\033[40;97m"
         GBG = "\033[100;30m"
-        cell_w = 5 if self.N >= 10 else 4
+        cell_w = 4
         label_w = max(2, len(str(self.N)))
         total = len(self._trace)
         pw = len(str(total))
@@ -1199,7 +1199,7 @@ def _print_puzzle(state: list[list[int]], clues: list[list[int]],
     if N == 0:
         return
 
-    cell_w = 5 if N >= 10 else 4
+    cell_w = 4
     label_w = max(2, len(str(N)))
 
     print((' ' * (label_w + 2) + ''.join(

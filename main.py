@@ -273,7 +273,7 @@ def print_puzzle(grid: list[list[int]], *, solved: bool = False) -> None:
         return
     width = len(grid[0])
 
-    cell_w = 5 if width >= 10 else 4
+    cell_w = 4
     label_w = max(2, len(str(height)))
 
     # Column header
