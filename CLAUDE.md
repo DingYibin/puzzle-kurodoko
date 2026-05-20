@@ -101,7 +101,7 @@ uv run python main.py --trace-delay 50        # 动画步间延迟（默认 10ms
 | `_analyze_pair(r1,c1,n1, r2,c2,n2)` | 707-814 | 跨线索推导（8组公式：行/列各4组，双向）；间隙全白时推算两线索外侧需补充的白格 |
 | `_propagate_domain()` | 819-868 | **(未使用)** |
 | `_try_cell_both(r,c)` | 870-910 | 对单格试 BLACK→WHITE，返回 1(定)/0(两可)/-1(矛盾) |
-| `_try_both()` | 912-930 | 遍历未知格调 _try_cell_both |
+| `_try_both()` | 912-933 | 遍历未知格调 _try_cell_both；按 `_action[-1]` 曼哈顿距离从近到远排序 |
 | `_set(r,c,val)` | 934-976 | 设值，级联规则 1/2/行列 |
 | `_check_rowcol_at(r,c)` | 978-1007 | 当某格变白时，四方向扫描找到线索对触发 _analyze_pair |
 | `_snap()` | 1009-1011 | 返回 `len(_action)` |

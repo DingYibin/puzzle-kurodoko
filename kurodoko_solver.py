@@ -907,6 +907,9 @@ class Solver:
         """Try both WHITE and BLACK for each unknown cell with full propagation."""
         unknown_cells = [(r, c) for r in range(self.N) for c in range(self.N)
                          if self.state[r][c] == UNKNOWN]
+        if self._action:
+            lr, lc, _, _ = self._action[-1]
+            unknown_cells.sort(key=lambda x: abs(x[0] - lr) + abs(x[1] - lc))
         changed = False
 
         for r, c in unknown_cells:
