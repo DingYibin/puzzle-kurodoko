@@ -1081,11 +1081,14 @@ class Solver:
                 f"{GBG}{'.'.rjust(cell_w - 1)} {RE}"
                 for c in range(self.N)
             )
-            _sys.stdout.write(f'{_row_label(r).rjust(label_w + 1)} {cells}\n')
+            _sys.stdout.write(f'{_row_label(r).rjust(label_w + 1)} {cells}')
+            if r < self.N - 1:
+                _sys.stdout.write("\n")
 
         # ── Live counter line ──
+        _sys.stdout.write("\n")
         counter_row = self.N + 3
-        _sys.stdout.write(f"\033[{counter_row};1H白:{wc:>{pw}}  黑:{bc:>{pw}}  未知:{uc:>{pw}}")
+        _sys.stdout.write(f"白:{wc:>{pw}}  黑:{bc:>{pw}}  未知:{uc:>{pw}}")
         _sys.stdout.flush()
         _time.sleep(2)
 
