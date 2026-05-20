@@ -18,6 +18,9 @@ uv run python main.py --size 10               # 指定尺寸
 uv run python main.py --load examples/03.json # 从文件加载
 uv run python main.py --debug                 # 调试模式
 uv run python main.py -p                      # 仅打印不求解
+uv run python main.py --trace                 # 播放 action 动画
+uv run python main.py --trace-full            # 播放完整 trace 含回溯
+uv run python main.py --trace-delay 50        # 动画步间延迟（默认 10ms）
 ```
 
 ---
@@ -50,6 +53,9 @@ uv run python main.py -p                      # 仅打印不求解
 - `--save` → 求解后保存
 - `--debug / -v` → 调试输出
 - `--time <sec>` → 时间限制
+- `--trace` → 播放 action 动画（`_action`，仅提交步骤）
+- `--trace-full` → 播放完整 trace（`_trace`，含回溯过程）
+- `--trace-delay <ms>` → 动画步间延迟毫秒（默认 10ms）
 
 ### `kurodoko_solver.py` — 求解器核心 (1015 行)
 
@@ -102,6 +108,7 @@ uv run python main.py -p                      # 仅打印不求解
 | `_backtrack(pos)` | 1013-1020 | 回滚到检查点 |
 | `pc()` | 1024-1032 | 打印当前网格状态 |
 | `_print_stats(elapsed)` | 1034-1066 | 打印计时 + 方法耗时（动态排序） |
+| `animate(delay, full_trace, elapsed)` | 1017-1090 | 终端动画：逐格 ANSI 更新 + 实时白/黑/未知计数器 |
 
 #### 顶层函数
 

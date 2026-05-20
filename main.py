@@ -8,6 +8,9 @@ Usage:
     uv run python main.py --daily             # Daily puzzle
     uv run python main.py --load path.json    # Load from file
     uv run python main.py -p                  # Print puzzle only (no solve)
+    uv run python main.py --trace             # Animate with committed steps
+    uv run python main.py --trace-full        # Animate with full trace + backtracking
+    uv run python main.py --trace-delay 50    # Set animation delay in ms (default 10)
 """
 
 import json
@@ -333,6 +336,9 @@ def main():
     load_path = None
     time_limit = 5.0
     debug = '--debug' in sys.argv or '-v' in sys.argv
+    trace = '--trace' in sys.argv
+    trace_full = '--trace-full' in sys.argv
+    trace_delay = 0.01
 
     args = sys.argv[1:]
     i = 0
@@ -352,6 +358,12 @@ def main():
         elif args[i] == '--time' and i + 1 < len(args):
             try:
                 time_limit = float(args[i + 1])
+            except ValueError:
+                pass
+            i += 2
+        elif args[i] == '--trace-delay' and i + 1 < len(args):
+            try:
+                trace_delay = float(args[i + 1]) / 1000.0
             except ValueError:
                 pass
             i += 2
@@ -413,16 +425,15 @@ def main():
     ok = solver.solve()
     elapsed = time.time() - t0
 
-    solver.pc()
-    t_str = (
-        f"{elapsed * 1e6:.0f}μs" if elapsed < 0.001 else
-        f"{elapsed * 1000:.2f}ms" if elapsed < 1.0 else
-        f"{elapsed:.3f}s"
-    )
-    if ok:
-        print(f"\n✅ 找到解 (节点: {solver.nodes}, 用时: {t_str})")
+    if trace or trace_full:
+        solver.animate(delay=trace_delay, full_trace=trace_full, elapsed=elapsed)
     else:
-        print(f"\n❌ 未找到解 (节点: {solver.nodes}, 用时: {t_str})")
+        solver.pc()
+        if ok:
+            print(f"\n✅ 找到解")
+        else:
+            print(f"\n❌ 未找到解")
+        solver._print_stats(elapsed)
 
     if use_save:
         save_puzzle(grid, **puzzle_meta)

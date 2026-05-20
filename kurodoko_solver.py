@@ -123,9 +123,6 @@ class Solver:
             self._timing["propagate"] += p_t
             self._timing["rounds"].append((tb_t, p_t))
 
-        elapsed = time.time() - self.t0
-        self._print_stats(elapsed)
-
         # Phase 4: DFS for remaining unknowns
         ok = all(self.state[r][c] != UNKNOWN for r in range(self.N) for c in range(self.N))
         if not ok:
@@ -1016,6 +1013,116 @@ class Solver:
             self._update_clues_for_cell(r, c)
 
     # ── display ─────────────────────────────────────────────────
+
+    def animate(self, delay=0.01, full_trace=False, elapsed=0.0):
+        """Animate solving process — per-cell ANSI updates.
+
+        full_trace=True: replay self._trace (all steps incl. backtracking).
+        full_trace=False: replay self._action (committed steps only).
+
+        Shows animation with live counters, then stats at the end.
+        """
+        import time as _time
+        import sys as _sys
+        import os as _os
+
+        steps = self._trace if full_trace else self._action
+        if not steps:
+            print("没有可动画化的步骤")
+            return
+
+        # ANSI codes — must match _print_puzzle exactly
+        RE = "\033[0m"
+        WBG = "\033[47;30m"
+        BBG = "\033[40;97m"
+        GBG = "\033[100;30m"
+        cell_w = 5 if self.N >= 10 else 4
+        label_w = max(2, len(str(self.N)))
+        total = len(steps)
+        pw = len(str(total))
+
+        # Column offset: label uses label_w+1 chars + 1 space before cells
+        # So cell c's first visible char is at 1-based col: label_w + 3 + c*cell_w
+        col_base = label_w + 3
+
+        # Init display grid and live counters
+        g = [[UNKNOWN] * self.N for _ in range(self.N)]
+        wc = bc = 0
+        uc = self.N * self.N
+        for r in range(self.N):
+            for c in range(self.N):
+                if self.clues[r][c] > 0:
+                    g[r][c] = WHITE
+                    wc += 1
+                    uc -= 1
+
+        _os.system('clear')
+
+        # ── Title ──
+        _sys.stdout.write(f"动画: {total} 步 (delay={delay*1000:.0f}ms)".ljust(60) + "\n")
+
+        # ── Column header ──
+        _sys.stdout.write((' ' * (label_w + 2) + ''.join(
+            _col_label(c).rjust(cell_w - 1) + ' ' for c in range(self.N)
+        )).rstrip() + "\n")
+
+        # ── Grid rows ──
+        for r in range(self.N):
+            cells = "".join(
+                f"{WBG}{str(self.clues[r][c]).rjust(cell_w - 1)} {RE}"
+                if self.clues[r][c] > 0 else
+                f"{GBG}{'.'.rjust(cell_w - 1)} {RE}"
+                for c in range(self.N)
+            )
+            _sys.stdout.write(f'{_row_label(r).rjust(label_w + 1)} {cells}\n')
+
+        # ── Live counter line ──
+        counter_row = self.N + 3
+        _sys.stdout.write(f"\033[{counter_row};1H白:{wc}  黑:{bc}  未知:{uc}")
+        _sys.stdout.flush()
+        _time.sleep(1)
+
+        # ── Animate steps ──
+        for step_i, (r, c, old, new) in enumerate(steps):
+            if self.fixed[r][c]:
+                continue
+
+            # Update counters
+            if old == UNKNOWN:   uc -= 1
+            elif old == WHITE:   wc -= 1
+            elif old == BLACK:   bc -= 1
+            if new == UNKNOWN:   uc += 1
+            elif new == WHITE:   wc += 1
+            elif new == BLACK:   bc += 1
+
+            g[r][c] = new
+            remaining = total - step_i - 1
+
+            # Progress (line 1)
+            _sys.stdout.write(f"\033[1;1H动画: {remaining:>{pw}}/{total} 步剩余".ljust(60))
+
+            # Cell content: grid row r is at line r+3, cell c at col_base + c*cell_w
+            _sys.stdout.write(f"\033[{r + 3};{col_base + c * cell_w}H")
+            if self.clues[r][c] > 0:
+                _sys.stdout.write(f'{WBG}{str(self.clues[r][c]).rjust(cell_w - 1)} {RE}')
+            elif new == BLACK:
+                _sys.stdout.write(f'{BBG}{"B".rjust(cell_w - 1)} {RE}')
+            elif new == WHITE:
+                _sys.stdout.write(f'{WBG}{"W".rjust(cell_w - 1)} {RE}')
+            else:
+                _sys.stdout.write(f'{GBG}{".".rjust(cell_w - 1)} {RE}')
+
+            # Live counters
+            _sys.stdout.write(f"\033[{counter_row};1H白:{wc}  黑:{bc}  未知:{uc}   ")
+            _sys.stdout.flush()
+            _time.sleep(delay)
+
+        _time.sleep(0.3)
+
+        # ── Stats only ──
+        _sys.stdout.write(f"\n")
+        _sys.stdout.flush()
+        self._print_stats(elapsed)
 
     @timer
     def pc(self):
