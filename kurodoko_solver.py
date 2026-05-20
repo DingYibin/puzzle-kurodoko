@@ -1080,7 +1080,7 @@ class Solver:
         counter_row = self.N + 3
         _sys.stdout.write(f"\033[{counter_row};1H白:{wc}  黑:{bc}  未知:{uc}")
         _sys.stdout.flush()
-        _time.sleep(1)
+        _time.sleep(2)
 
         # ── Animate steps ──
         for step_i, (r, c, old, new) in enumerate(steps):
@@ -1117,7 +1117,7 @@ class Solver:
             _sys.stdout.flush()
             _time.sleep(delay)
 
-        _time.sleep(0.3)
+        _time.sleep(2)
 
         # ── Stats only ──
         _sys.stdout.write(f"\n")
